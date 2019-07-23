@@ -141,7 +141,7 @@ def checkNewCommentsForGeoRunnr():
 				print(message)
 				print()
 
-				# comment.reply(message)
+				comment.reply(message)
 
 
 
