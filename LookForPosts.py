@@ -2,6 +2,7 @@ import praw
 import re
 import os, sys
 from datetime import datetime
+import math
 
 
 def getRedditInstance():
@@ -39,7 +40,7 @@ def getInfoLine():
 
 ---
 
-^(I'm a bot, message the author: /u/LiquidProgrammer if I made a mistake.)"""
+^(I'm a bot, message the author:) ^[LiquidProgrammer](https://www.reddit.com/message/compose/?to=LiquidProgrammer) ^(if I made a mistake.)"""
 
 def checkNewCommentsForGeoRunnr():
 
@@ -69,6 +70,8 @@ def checkNewCommentsForGeoRunnr():
 		if "!georunnr" in comment.body.lower():
 			alreadyReplied = False
 			comment.refresh()
+
+			# Check if there is already a reply by the reddit bot
 			for reply in comment.replies:
 				try:
 					if reply.author.name == botUsername:
@@ -76,14 +79,20 @@ def checkNewCommentsForGeoRunnr():
 				except AttributeError:
 					pass
 			message = ""
+
+			# If there is no reply then post one 
 			if comment.id not in repliedCommentIds and comment.author.name != botUsername and not alreadyReplied:
 				repliedCommentIds.add(comment.id)
 				entry = [line for line in comment.body.lower().split('\n') if "!georunnr" in line][0].split()
+
+				# If there aren't 3 space separated strings then set the message to the error message
 				if len(entry) != 3:
 					entry.extend(['Not found'] * 3)
 					message = """Sorry, it seems I didn't understand your entry correctly!
 	It looks like `{0}` is your score and `{1}` is your time, is this correct?
 	Entries should be formatted like this: `!GeoRunnr score mm:ss`.""".format(entry[1], entry[2])
+
+				# If there are format the message and strings
 				else:
 					score = int(entry[1])
 					timeStr = entry[2].split(":")
@@ -92,24 +101,47 @@ def checkNewCommentsForGeoRunnr():
 					print(entry)
 
 					# If time is given in hh:mm:ss
-					if len(timeStr) == 3: 
+					if len(timeStr) == 3:
 						time = int(timeStr[0]) * 60 + int(timeStr[1]) + int(timeStr[2]) / 60.0
 
 					# If time is given in mm:ss
-					if len(timeStr) == 2: 
+					if len(timeStr) == 2:
 						time = int(timeStr[0]) + int(timeStr[1]) / 60.0
 
 					# If time is given in ss
-					if len(timeStr) == 1: 
+					if len(timeStr) == 1:
 						time = int(timeStr[0]) / 60.0
 
-					message = "Your !GeoRunnr score is %.2f" % formula(score, time)
+					subText = comment.submission.selftext.lower()
+					# subText = "!GeoRunnrFormula score * mins".lower()
+					geoRunnrScore = 0
+					if "!georunnrformula" in subText:
+						formulas = [line for line in subText.split('\n') if "!georunnrformula" in line]
+						print(formulas)
+						if len(formulas) > 0:
+							scoreStr = formulas[0].replace("!georunnrformula", "")
+							scoreStr = scoreStr.replace("`", "")
+							scoreStr = scoreStr.replace("score", str(score)).replace("mins", str(time))
+							print(scoreStr)
+							try:
+								if all([char in "0123456789+-()*/. " for char in scoreStr]):
+									geoRunnrScore = eval(scoreStr)
+								else:
+									geoRunnrScore = formula(score, time)
+							except:
+								geoRunnrScore = formula(score, time)
+						else:
+							geoRunnrScore = formula(score, time)
+					else:
+						geoRunnrScore = formula(score, time)
+
+					message = "Your !GeoRunnr score is %.2f" % geoRunnrScore
 
 				message += getInfoLine()
 				print(message)
 				print()
 
-				comment.reply(message)
+				# comment.reply(message)
 
 
 
