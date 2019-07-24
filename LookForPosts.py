@@ -121,6 +121,7 @@ def checkNewCommentsForGeoRunnr():
 						if len(formulas) > 0:
 							scoreStr = formulas[0].replace("!georunnrformula", "")
 							scoreStr = scoreStr.replace("`", "")
+							scoreStr = scoreStr.replace("\\", "")
 							scoreStr = scoreStr.replace("score", str(score)).replace("mins", str(time))
 							print(scoreStr)
 							try:
