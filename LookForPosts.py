@@ -3,6 +3,7 @@ import re
 import os, sys
 from datetime import datetime
 import math
+import time
 
 
 def getRedditInstance():
@@ -152,4 +153,9 @@ def checkNewCommentsForGeoRunnr():
 	print(datetime.now())
 
 if __name__ == '__main__':
-	checkNewCommentsForGeoRunnr()
+	while True:
+		try:
+			checkNewCommentsForGeoRunnr()
+		except Exception as e:
+			print("Found error: \n" + str(e))
+			time.sleep(20)
