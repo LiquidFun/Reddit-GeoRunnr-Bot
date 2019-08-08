@@ -137,7 +137,7 @@ def checkNewCommentsForGeoRunnr():
 					else:
 						geoRunnrScore = formula(score, time)
 
-					message = "Your !GeoRunnr score is %d" % int(math.round(geoRunnrScore))
+					message = "Your !GeoRunnr score is %d" % int(round(geoRunnrScore))
 
 				message += getInfoLine()
 				print(message)
