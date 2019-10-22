@@ -191,11 +191,11 @@ def checkNewCommentsForGeoRunnr():
 						entryName = '(' + entryName + ')'
 
 					if len(scores) == 1:
-						message = "Your GeoRunnr score is {0} {1}\n".format(int(round(geoRunnrScore)), entryName)
+						message = "Your GeoRunnr score is {0}\n".format(int(round(geoRunnrScore)))
 					else:
 						message = ''
 						for index, score in enumerate(scores):
-							message += "{0}. GeoRunnr score is {1} {2}\n".format(index+1, int(round(score)), entryName)
+							message += "{0}. GeoRunnr score is {1}\n".format(index+1, int(round(score)))
 
 
 				message += getInfoLine()
