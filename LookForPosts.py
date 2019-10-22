@@ -43,6 +43,13 @@ def getInfoLine():
 
 ^(I'm a bot, message the author:) ^[LiquidProgrammer](https://www.reddit.com/message/compose/?to=LiquidProgrammer) ^(if I made a mistake.)"""
 
+def is_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
+
 def checkNewCommentsForGeoRunnr():
 
 	# Measure time
@@ -85,21 +92,45 @@ def checkNewCommentsForGeoRunnr():
 			if comment.id not in repliedCommentIds and comment.author.name != botUsername and not alreadyReplied:
 				repliedCommentIds.add(comment.id)
 				entry = [line for line in comment.body.lower().split('\n') if "!georunnr" in line][0].split()
+				while entry[0] != "!georunnr":
+					entry = entry[1:]
+					if len(entry) == 0:
+						break
+
+				# Swap entry 1 and 2 if the time and score have been mixed up
+				if len(entry == 3):
+					if entry[0] == '!georunnr' and not is_int(entry[1]) and is_int(entry[2]) and ":" in entry[1]:
+						entry[1]. entry[2] = entry[2], entry[1]
+
+				print(entry)
 
 				# If there aren't 3 space separated strings then set the message to the error message
 				if len(entry) != 3:
 					entry.extend(['Not found'] * 3)
 					message = """Sorry, it seems I didn't understand your entry correctly!
 	It looks like `{0}` is your score and `{1}` is your time, is this correct?
-	Entries should be formatted like this: `!GeoRunnr score mm:ss`.""".format(entry[1], entry[2])
+	Entries should be formatted like this: `!GeoRunnr score mm:ss`.
+	There should be nothing after that in the same line.""".format(entry[1], entry[2])
 
-				# If there are format the message and strings
+				# Check if the first entry is a number
+				if not is_int(entry[1]):
+					message = """Sorry, it seems I didn't understand your entry correctly!
+	It looks like `{0}` is your score, are you sure it is an integer?
+	Entries should be formatted like this: `!GeoRunnr score mm:ss`.""".format(entry[1])
+
+				# Check if the time is formatted correctly
+				if len(entry[2].split(":")) != 2 and len(entry[2].split(":")) != 3:
+					message = """Sorry, it seems I didn't understand your entry correctly!
+	It looks like `{0}` is your time, are you sure it is formatted correctly as `hh:mm:ss` or `mm:ss`?
+	Entries should be formatted like this: `!GeoRunnr score mm:ss`.""".format(entry[2])
+					
+
+				# if there are format the message and strings
 				else:
+					print(comment.submission.id)
 					score = int(entry[1])
 					timeStr = entry[2].split(":")
 					time = 0
-
-					print(entry)
 
 					# If time is given in hh:mm:ss
 					if len(timeStr) == 3:
@@ -109,9 +140,9 @@ def checkNewCommentsForGeoRunnr():
 					if len(timeStr) == 2:
 						time = int(timeStr[0]) + int(timeStr[1]) / 60.0
 
-					# If time is given in ss
-					if len(timeStr) == 1:
-						time = int(timeStr[0]) / 60.0
+					# # If time is given in ss
+					# if len(timeStr) == 1:
+					# 	time = int(timeStr[0]) / 60.0
 
 					subText = comment.submission.selftext.lower()
 					# subText = "!GeoRunnrFormula score * mins".lower()
