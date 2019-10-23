@@ -91,26 +91,36 @@ def checkNewCommentsForGeoRunnr():
 			# If there is no reply then post one 
 			if comment.id not in repliedCommentIds and comment.author.name != botUsername and not alreadyReplied:
 				repliedCommentIds.add(comment.id)
-				entries = [line for line in comment.body.lower().split('\n') if "!georunnr" in line]
+				entries = [line for line in comment.body.split('\n') if "!georunnr" in line.lower()]
 				scores = []
+				entryNames = []
 				for e in entries:
 					entry = e.split()
 					entryName = ''
 
 					# Remove stuff before the !georunnr tag
-					while entry[0] != "!georunnr":
-						entryName = entry[0]
+					while entry[0].lower() != "!georunnr":
+						entryName += entry[0]
 						entry = entry[1:]
 						if len(entry) == 0:
 							break
 
+					if len(entry) < 3:
+						message = """Sorry, it seems like you supplied too few arguments to the bang!
+		I found this {0}, is this correct?
+		Entries should be formatted like this: `!GeoRunnr score mm:ss`.""".format(entry)
+						break
+
 					# Get the entry name
 					entry.append('')
 					if entry[3] != '':
-						entryName = entry[3]
+						entryName = ''.join(entry[3:])
 
 					# Remove stuff after the second number
 					entry = entry[:3]
+
+					# Decapitalize everything in the entry
+					entry = [e.lower() for e in entry]
 
 					# Swap entry 1 and 2 if the time and score have been mixed up
 					if len(entry) == 3:
@@ -124,8 +134,7 @@ def checkNewCommentsForGeoRunnr():
 						entry.extend(['Not found'] * 3)
 						message = """Sorry, it seems I didn't understand your entry correctly!
 		It looks like `{0}` is your score and `{1}` is your time, is this correct?
-		Entries should be formatted like this: `!GeoRunnr score mm:ss`.
-		There should be nothing after that in the same line.""".format(entry[1], entry[2])
+		Entries should be formatted like this: `!GeoRunnr score mm:ss`.""".format(entry[1], entry[2])
 						break
 
 					# Check if the first entry is a number
@@ -185,17 +194,18 @@ def checkNewCommentsForGeoRunnr():
 						else:
 							geoRunnrScore = formula(score, time)
 
-						scores.append(geoRunnrScore)
+						if entryName != '':
+							entryName = '(' + entryName + ')'
 
-					if entryName != '':
-						entryName = '(' + entryName + ')'
+						scores.append(geoRunnrScore)
+						entryNames.append(entryName)
 
 					if len(scores) == 1:
-						message = "Your GeoRunnr score is {0}\n".format(int(round(geoRunnrScore)))
+						message = "Your GeoRunnr score is {0} {1}\n".format(int(round(geoRunnrScore)), entryNames[0])
 					else:
 						message = ''
 						for index, score in enumerate(scores):
-							message += "{0}. GeoRunnr score is {1}\n".format(index+1, int(round(score)))
+							message += "{0}. GeoRunnr score is {1} {2}\n".format(index+1, int(round(score)), entryNames[index])
 
 
 				message += getInfoLine()
