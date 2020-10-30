@@ -34,7 +34,7 @@ def getBotUsername():
     return lines[2].strip()
 
 def formula(score, mins):
-	return score * (1.0 - (mins/60.0)**2.0)
+    return score * (1.0 - (mins/60.0)**2.0)
 
 def getInfoLine():
     return """
@@ -52,179 +52,182 @@ def is_int(s):
 
 def checkNewCommentsForGeoRunnr():
 
-	# Measure time
-	startTime = datetime.now()
+    # Measure time
+    startTime = datetime.now()
 
-	print(str(datetime.now()) + ": Running GeoRunnr.")
+    print(str(datetime.now()) + ": Running GeoRunnr.")
 
-	reddit = getRedditInstance()
-	subreddit = reddit.subreddit("geoguessr")
+    reddit = getRedditInstance()
+    subreddit = reddit.subreddit("geoguessr")
 
-	print(str(datetime.now() - startTime) + ": Acquiring submission list. ")
+    print(str(datetime.now() - startTime) + ": Acquiring submission list. ")
 
-	# Get last submissions from the subreddit
-	# submissionList = subreddit.new(limit = 1000)
+    # Get last submissions from the subreddit
+    # submissionList = subreddit.new(limit = 1000)
 
-	print(str(datetime.now() - startTime) + ": Looking for posts with the !GeoRunnr tag. ")    
+    print(str(datetime.now() - startTime) + ": Looking for posts with the !GeoRunnr tag. ")    
 
-	botUsername = getBotUsername()
-	
-	# print(botUsername)
+    botUsername = getBotUsername()
+    
+    # print(botUsername)
 
-	repliedCommentIds = set()
+    repliedCommentIds = set()
 
-	# Look for comments with !GeoRunnr
-	for comment in subreddit.stream.comments():
-		if "!georunnr" in comment.body.lower():
-			alreadyReplied = False
-			comment.refresh()
+    # Look for comments with !GeoRunnr
+    for comment in subreddit.stream.comments():
+        print(comment)
+        if "!georunnr" in comment.body.lower():
+            alreadyReplied = False
+            comment.refresh()
 
-			# Check if there is already a reply by the reddit bot
-			for reply in comment.replies:
-				try:
-					if reply.author.name == botUsername:
-						alreadyReplied = True
-				except AttributeError:
-					pass
-			message = ""
+            # Check if there is already a reply by the reddit bot
+            for reply in comment.replies:
+                try:
+                    if reply.author.name == botUsername:
+                        alreadyReplied = True
+                except AttributeError:
+                    pass
+            message = ""
 
-			# If there is no reply then post one 
-			if comment.id not in repliedCommentIds and comment.author.name != botUsername and not alreadyReplied:
-				repliedCommentIds.add(comment.id)
-				entries = [line for line in comment.body.split('\n') if "!georunnr" in line.lower()]
-				scores = []
-				entryNames = []
-				for e in entries:
-					entry = e.split()
-					entryName = ''
+            # If there is no reply then post one 
+            if comment.id not in repliedCommentIds and comment.author.name != botUsername and not alreadyReplied:
+                repliedCommentIds.add(comment.id)
+                entries = [line for line in comment.body.split('\n') if "!georunnr" in line.lower()]
+                scores = []
+                entryNames = []
+                for e in entries:
+                    entry = e.split()
+                    entryName = ''
 
-					# Remove stuff before the !georunnr tag
-					while entry[0].lower() != "!georunnr":
-						entryName += entry[0]
-						entry = entry[1:]
-						if len(entry) == 0:
-							break
+                    # Remove stuff before the !georunnr tag
+                    while entry[0].lower() != "!georunnr":
+                        entryName += entry[0]
+                        entry = entry[1:]
+                        if len(entry) == 0:
+                            break
 
-					if len(entry) < 3:
-						message = """Sorry, it seems like you supplied too few arguments to the bang!
-		I found this {0}, is this correct?
-		Entries should be formatted like this: `!GeoRunnr score mm:ss`.""".format(entry)
-						break
+                    if len(entry) < 3:
+                        message = """Sorry, it seems like you supplied too few arguments to the bang!
+        I found this {0}, is this correct?
+        Entries should be formatted like this: `!GeoRunnr score mm:ss`.""".format(entry)
+                        break
 
-					# Get the entry name
-					entry.append('')
-					if entry[3] != '':
-						entryName = ''.join(entry[3:])
+                    # Get the entry name
+                    entry.append('')
+                    if entry[3] != '':
+                        entryName = ''.join(entry[3:])
 
-					# Remove stuff after the second number
-					entry = entry[:3]
+                    # Remove stuff after the second number
+                    entry = entry[:3]
 
-					# Decapitalize everything in the entry
-					entry = [e.lower() for e in entry]
+                    # Decapitalize everything in the entry
+                    entry = [e.lower() for e in entry]
 
-					# Swap entry 1 and 2 if the time and score have been mixed up
-					if len(entry) == 3:
-						if entry[0] == '!georunnr' and not is_int(entry[1]) and is_int(entry[2]) and ":" in entry[1]:
-							entry[1], entry[2] = entry[2], entry[1]
+                    # Swap entry 1 and 2 if the time and score have been mixed up
+                    if len(entry) == 3:
+                        if entry[0] == '!georunnr' and not is_int(entry[1]) and is_int(entry[2]) and ":" in entry[1]:
+                            entry[1], entry[2] = entry[2], entry[1]
 
-					print(entry)
+                    print(entry)
 
-					# If there aren't 3 space separated strings then set the message to the error message
-					if len(entry) != 3:
-						entry.extend(['Not found'] * 3)
-						message = """Sorry, it seems I didn't understand your entry correctly!
-		It looks like `{0}` is your score and `{1}` is your time, is this correct?
-		Entries should be formatted like this: `!GeoRunnr score mm:ss`.""".format(entry[1], entry[2])
-						break
+                    # If there aren't 3 space separated strings then set the message to the error message
+                    if len(entry) != 3:
+                        entry.extend(['Not found'] * 3)
+                        message = """Sorry, it seems I didn't understand your entry correctly!
+        It looks like `{0}` is your score and `{1}` is your time, is this correct?
+        Entries should be formatted like this: `!GeoRunnr score mm:ss`.""".format(entry[1], entry[2])
+                        break
 
-					# Check if the first entry is a number
-					if not is_int(entry[1]):
-						message = """Sorry, it seems I didn't understand your entry correctly!
-		It looks like `{0}` is your score, are you sure it is an integer?
-		Entries should be formatted like this: `!GeoRunnr score mm:ss`.""".format(entry[1])
-						break
+                    # Check if the first entry is a number
+                    if not is_int(entry[1]):
+                        message = """Sorry, it seems I didn't understand your entry correctly!
+        It looks like `{0}` is your score, are you sure it is an integer?
+        Entries should be formatted like this: `!GeoRunnr score mm:ss`.""".format(entry[1])
+                        break
 
-					# Check if the time is formatted correctly
-					if len(entry[2].split(":")) != 2 and len(entry[2].split(":")) != 3:
-						message = """Sorry, it seems I didn't understand your entry correctly!
-		It looks like `{0}` is your time, are you sure it is formatted correctly as `hh:mm:ss` or `mm:ss`?
-		Entries should be formatted like this: `!GeoRunnr score mm:ss`.""".format(entry[2])
-						break
+                    # Check if the time is formatted correctly
+                    if len(entry[2].split(":")) != 2 and len(entry[2].split(":")) != 3:
+                        message = """Sorry, it seems I didn't understand your entry correctly!
+        It looks like `{0}` is your time, are you sure it is formatted correctly as `hh:mm:ss` or `mm:ss`?
+        Entries should be formatted like this: `!GeoRunnr score mm:ss`.""".format(entry[2])
+                        break
 
-					# if there are format the message and strings
-					else:
-						print(comment.submission.id)
-						score = int(entry[1])
-						timeStr = entry[2].split(":")
-						time = 0
+                    # if there are format the message and strings
+                    else:
+                        print(comment.submission.id)
+                        score = int(entry[1])
+                        timeStr = entry[2].split(":")
+                        time = 0
 
-						# If time is given in hh:mm:ss
-						if len(timeStr) == 3:
-							time = int(timeStr[0]) * 60 + int(timeStr[1]) + int(timeStr[2]) / 60.0
+                        # If time is given in hh:mm:ss
+                        if len(timeStr) == 3:
+                            time = int(timeStr[0]) * 60 + int(timeStr[1]) + int(timeStr[2]) / 60.0
 
-						# If time is given in mm:ss
-						if len(timeStr) == 2:
-							time = int(timeStr[0]) + int(timeStr[1]) / 60.0
+                        # If time is given in mm:ss
+                        if len(timeStr) == 2:
+                            time = int(timeStr[0]) + int(timeStr[1]) / 60.0
 
-						# # If time is given in ss
-						# if len(timeStr) == 1:
-						# 	time = int(timeStr[0]) / 60.0
+                        # # If time is given in ss
+                        # if len(timeStr) == 1:
+                        #   time = int(timeStr[0]) / 60.0
 
-						subText = comment.submission.selftext.lower()
-						# subText = "!GeoRunnrFormula score * mins".lower()
-						geoRunnrScore = 0
-						if "!georunnrformula" in subText:
-							formulas = [line for line in subText.split('\n') if "!georunnrformula" in line]
-							print(formulas)
-							if len(formulas) > 0:
-								scoreStr = formulas[0].replace("!georunnrformula", "")
-								scoreStr = scoreStr.replace("`", "")
-								scoreStr = scoreStr.replace("\\", "")
-								scoreStr = scoreStr.replace("score", str(score)).replace("mins", str(time))
-								print(scoreStr)
-								try:
-									if all([char in "0123456789+-()*/. " for char in scoreStr]):
-										geoRunnrScore = eval(scoreStr)
-									else:
-										geoRunnrScore = formula(score, time)
-								except:
-									geoRunnrScore = formula(score, time)
-							else:
-								geoRunnrScore = formula(score, time)
-						else:
-							geoRunnrScore = formula(score, time)
+                        subText = comment.submission.selftext.lower()
+                        # subText = "!GeoRunnrFormula score * mins".lower()
+                        geoRunnrScore = 0
+                        if "!georunnrformula" in subText:
+                            formulas = [line for line in subText.split('\n') if "!georunnrformula" in line]
+                            print(formulas)
+                            if len(formulas) > 0:
+                                scoreStr = formulas[0].replace("!georunnrformula", "")
+                                scoreStr = scoreStr.replace("`", "")
+                                scoreStr = scoreStr.replace("\\", "")
+                                scoreStr = scoreStr.replace("score", str(score)).replace("mins", str(time))
+                                print(scoreStr)
+                                try:
+                                    if all([char in "0123456789+-()*/. " for char in scoreStr]):
+                                        geoRunnrScore = eval(scoreStr)
+                                    else:
+                                        geoRunnrScore = formula(score, time)
+                                except:
+                                    geoRunnrScore = formula(score, time)
+                            else:
+                                geoRunnrScore = formula(score, time)
+                        else:
+                            geoRunnrScore = formula(score, time)
 
-						if entryName != '':
-							entryName = '(' + entryName + ')'
+                        if entryName != '':
+                            entryName = '(' + entryName + ')'
 
-						scores.append(geoRunnrScore)
-						entryNames.append(entryName)
+                        scores.append(geoRunnrScore)
+                        entryNames.append(entryName)
 
-					if len(scores) == 1:
-						message = "Your GeoRunnr score is {0} {1}\n".format(int(round(geoRunnrScore)), entryNames[0])
-					else:
-						message = ''
-						for index, score in enumerate(scores):
-							message += "{0}. GeoRunnr score is {1} {2}\n".format(index+1, int(round(score)), entryNames[index])
-
-
-				message += getInfoLine()
-				print(message)
-				print()
-
-				comment.reply(message)
+                    if len(scores) == 1:
+                        message = "Your GeoRunnr score is {0} {1}\n".format(int(round(geoRunnrScore)), entryNames[0])
+                    else:
+                        message = ''
+                        for index, score in enumerate(scores):
+                            message += "{0}. GeoRunnr score is {1} {2}\n".format(index+1, int(round(score)), entryNames[index])
 
 
+                message += getInfoLine()
+                print(message)
+                print()
+
+                comment.reply(message)
 
 
-	# Print how long it took
-	print(str(datetime.now() - startTime) + ": Finished. ")    
-	print(datetime.now())
+
+
+    # Print how long it took
+    print(str(datetime.now() - startTime) + ": Finished. ")    
+    print(datetime.now())
 
 if __name__ == '__main__':
-	while True:
-		try:
-			checkNewCommentsForGeoRunnr()
-		except Exception as e:
-			print("Found error: \n" + str(e))
-			time.sleep(20)
+    while True:
+        try:
+            checkNewCommentsForGeoRunnr()
+        except Exception as e:
+            print("Found error: \n" + str(e))
+            import traceback
+            print(traceback.format_exc())
+            time.sleep(100)
